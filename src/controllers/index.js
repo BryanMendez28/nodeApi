@@ -15,12 +15,12 @@ exports.get = (req,res)=>{
 }
 
 exports.getTabla = async (req, res) => {
-    const {
-      fechaInicio,
-      fechaFin,
-      horaInicio,
-      horaFin,
-      cliente_id,
+    let {
+      fechaInicio = '0000-00-00',
+      fechaFin = '0000-00-00',
+      horaInicio = '00:00:00',
+      horaFin= '00:00:00',
+      cliente_id = '',
     } = req.query;
   
     req.getConnection((err, conn) => {
