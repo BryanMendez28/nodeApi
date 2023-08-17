@@ -16,11 +16,11 @@ exports.get = (req,res)=>{
 
 exports.getTabla = async (req, res) => {
     let {
-      fechaInicio = '0000-00-00',
-      fechaFin = '0000-00-00',
-      horaInicio = '00:00:00',
-      horaFin= '00:00:00',
-      cliente_id = '',
+      fechaInicio ,
+      fechaFin ,
+      horaInicio ,
+      horaFin ,
+      cliente_id ,
     } = req.query;
   
     req.getConnection((err, conn) => {
@@ -39,11 +39,11 @@ exports.getTabla = async (req, res) => {
         JOIN nayax_temp B ON B.id= A.cliente_id
         WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
           AND A.MachineSeTimeTimeOnly BETWEEN ? AND ? 
-          AND B.nombre = ? 
+          AND B.nombre Like ? 
         GROUP BY A.ProductCodeInMap;
       `;
   
-      conn.query(query, [fechaInicio, fechaFin, horaInicio, horaFin, cliente_id], (err, result) => {
+      conn.query(query, [fechaInicio, fechaFin, horaInicio, horaFin, `${cliente_id}%`], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
