@@ -27,20 +27,27 @@ exports.getTabla = async (req, res) => {
       if (err) return res.send(err);
   
       const query = `
-        SELECT 
-          A.ProductCodeInMap,
-          COUNT(*) AS TotalRegistros,
-          SUM(CASE WHEN A.PaymentMethodId = 1 THEN 1 ELSE 0 END) AS TotalRegistrosTarjetaCredito,
-          SUM(CASE WHEN A.PaymentMethodId = 3 THEN 1 ELSE 0 END) AS TotalRegistrosEfectivo,
-          SUM(CASE WHEN A.PaymentMethodId = 1 THEN SeValue ELSE 0 END) AS TotalGastadoTarjetaCredito,
-          SUM(CASE WHEN A.PaymentMethodId = 3 THEN SeValue ELSE 0 END) AS TotalGastadoEfectivo,
-          SUM(SeValue) AS TotalCosto
-        FROM nayax_transacciones A 
-        JOIN nayax_temp B ON B.id= A.cliente_id
-        WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
+      SELECT 
+      A.ProductCodeInMap,
+      COUNT(*) AS TotalRegistros,
+      SUM(CASE WHEN A.PaymentMethodId = 1 THEN 1 ELSE 0 END) AS TotalRegistrosTarjetaCredito,
+      SUM(CASE WHEN A.PaymentMethodId = 3 THEN 1 ELSE 0 END) AS TotalRegistrosEfectivo,
+      SUM(CASE WHEN A.PaymentMethodId = 1 THEN 
+               CAST(SeValue AS DECIMAL(10, 2)) - CAST(SUBSTRING(ExtraCharge, 1, LENGTH(ExtraCharge) - 2) AS DECIMAL(10, 2))
+               ELSE 0 
+          END) AS TotalGastadoTarjetaCredito,
+      SUM(CASE WHEN A.PaymentMethodId = 3 THEN CAST(SeValue AS DECIMAL(10, 2)) ELSE 0 END) AS TotalGastadoEfectivo,
+       SUM(CASE WHEN A.PaymentMethodId = 1 THEN 
+               CAST(SeValue AS DECIMAL(10, 2)) - CAST(SUBSTRING(ExtraCharge, 1, LENGTH(ExtraCharge) - 2) AS DECIMAL(10, 2))
+               ELSE 0 
+          END) +
+      SUM(CASE WHEN A.PaymentMethodId = 3 THEN CAST(SeValue AS DECIMAL(10, 2)) ELSE 0 END) AS TotalCosto
+    FROM nayax_transacciones A 
+    JOIN nayax_temp B ON B.id= A.cliente_id
+    WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
           AND A.MachineSeTimeTimeOnly BETWEEN ? AND ? 
-          AND B.nombre Like ? 
-        GROUP BY A.ProductCodeInMap;
+          AND B.nombre Like ?
+    GROUP BY A.ProductCodeInMap;
       `;
   
       conn.query(query, [fechaInicio, fechaFin, horaInicio, horaFin, `${cliente_id}%`], (err, result) => {
