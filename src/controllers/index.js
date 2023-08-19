@@ -18,8 +18,7 @@ exports.getTabla = async (req, res) => {
     let {
       fechaInicio ,
       fechaFin ,
-      horaInicio ,
-      horaFin ,
+     
       cliente_id ,
     } = req.query;
   
@@ -28,29 +27,18 @@ exports.getTabla = async (req, res) => {
   
       const query = `
       SELECT 
-      A.ProductCodeInMap,
-      COUNT(*) AS TotalRegistros,
-      SUM(CASE WHEN A.PaymentMethodId = 1 THEN 1 ELSE 0 END) AS TotalRegistrosTarjetaCredito,
-      SUM(CASE WHEN A.PaymentMethodId = 3 THEN 1 ELSE 0 END) AS TotalRegistrosEfectivo,
-      SUM(CASE WHEN A.PaymentMethodId = 1 THEN 
-               CAST(SeValue AS DECIMAL(10, 2)) - CAST(SUBSTRING(ExtraCharge, 1, LENGTH(ExtraCharge) - 2) AS DECIMAL(10, 2))
-               ELSE 0 
-          END) AS TotalGastadoTarjetaCredito,
-      SUM(CASE WHEN A.PaymentMethodId = 3 THEN CAST(SeValue AS DECIMAL(10, 2)) ELSE 0 END) AS TotalGastadoEfectivo,
-       SUM(CASE WHEN A.PaymentMethodId = 1 THEN 
-               CAST(SeValue AS DECIMAL(10, 2)) - CAST(SUBSTRING(ExtraCharge, 1, LENGTH(ExtraCharge) - 2) AS DECIMAL(10, 2))
-               ELSE 0 
-          END) +
-      SUM(CASE WHEN A.PaymentMethodId = 3 THEN CAST(SeValue AS DECIMAL(10, 2)) ELSE 0 END) AS TotalCosto
-    FROM nayax_transacciones A 
-    JOIN nayax_temp B ON B.id= A.cliente_id
-    WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ? 
-          AND B.nombre Like ?
-    GROUP BY A.ProductCodeInMap;
+      A.ProductCodeInMap, 
+      CAST(SeValue AS UNSIGNED) AS SeValue,
+      COUNT(*) AS TotalRegistros
+  FROM nayax_transacciones A 
+  JOIN nayax_temp B ON B.id = A.cliente_id
+  WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+          BETWEEN ? AND ?
+  AND B.nombre LIKE ?
+  GROUP BY A.ProductCodeInMap;
       `;
   
-      conn.query(query, [fechaInicio, fechaFin, horaInicio, horaFin, `${cliente_id}%`], (err, result) => {
+      conn.query(query, [fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
@@ -63,8 +51,7 @@ exports.getTablaTotal = async (req, res) => {
   let {
     fechaInicio ,
     fechaFin ,
-    horaInicio ,
-    horaFin ,
+    
     cliente_id ,
   } = req.query;
 
@@ -74,38 +61,23 @@ exports.getTablaTotal = async (req, res) => {
     const query = `
    
   SELECT
-  SUM(TotalRegistros) AS SumaTotalRegistros,
-  SUM(TotalRegistrosTarjetaCredito) AS SumaTotalRegistrosTarjetaCredito,
-  SUM(TotalRegistrosEfectivo) AS SumaTotalRegistrosEfectivo,
-  SUM(TotalGastadoTarjetaCredito) AS SumaTotalGastadoTarjetaCredito,
-  SUM(TotalGastadoEfectivo) AS SumaTotalGastadoEfectivo,
-  SUM(TotalCosto) AS SumaTotalCosto
+  SUM(TotalRegistros) AS SumaTotalRegistros
+
 FROM (
   SELECT 
-      A.ProductCodeInMap,
-      COUNT(*) AS TotalRegistros,
-      SUM(CASE WHEN A.PaymentMethodId = 1 THEN 1 ELSE 0 END) AS TotalRegistrosTarjetaCredito,
-      SUM(CASE WHEN A.PaymentMethodId = 3 THEN 1 ELSE 0 END) AS TotalRegistrosEfectivo,
-      SUM(CASE WHEN A.PaymentMethodId = 1 THEN 
-               CAST(SeValue AS DECIMAL(10, 2)) - CAST(SUBSTRING(ExtraCharge, 1, LENGTH(ExtraCharge) - 2) AS DECIMAL(10, 2))
-               ELSE 0 
-          END) AS TotalGastadoTarjetaCredito,
-      SUM(CASE WHEN A.PaymentMethodId = 3 THEN CAST(SeValue AS DECIMAL(10, 2)) ELSE 0 END) AS TotalGastadoEfectivo,
-       SUM(CASE WHEN A.PaymentMethodId = 1 THEN 
-               CAST(SeValue AS DECIMAL(10, 2)) - CAST(SUBSTRING(ExtraCharge, 1, LENGTH(ExtraCharge) - 2) AS DECIMAL(10, 2))
-               ELSE 0 
-          END) +
-      SUM(CASE WHEN A.PaymentMethodId = 3 THEN CAST(SeValue AS DECIMAL(10, 2)) ELSE 0 END) AS TotalCosto
-    FROM nayax_transacciones A 
-    JOIN nayax_temp B ON B.id= A.cliente_id
-    WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ? 
-          AND B.nombre Like ?
-    GROUP BY A.ProductCodeInMap
+      A.ProductCodeInMap, 
+      CAST(SeValue AS UNSIGNED) AS SeValue,
+      COUNT(*) AS TotalRegistros
+  FROM nayax_transacciones A 
+  JOIN nayax_temp B ON B.id = A.cliente_id
+  WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+          BETWEEN ? AND ?
+  AND B.nombre LIKE ?
+  GROUP BY A.ProductCodeInMap
 ) AS Subconsulta;
     `;
 
-    conn.query(query, [fechaInicio, fechaFin, horaInicio, horaFin, `${cliente_id}%`], (err, result) => {
+    conn.query(query, [fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
       if (err) return res.send(err);
       res.send(result);
     });
@@ -119,8 +91,7 @@ exports.getTotal = async (req, res) => {
     const {
       fechaInicio,
       fechaFin, 
-      horaInicio,
-      horaFin,
+      
       nombreMaquinaFiltro,
       codeProductFiltro
     } = req.query;
@@ -135,9 +106,9 @@ exports.getTotal = async (req, res) => {
         SELECT SUM(A.SeValue) AS TotalGastadoTarjetaCredito
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ?
-          AND B.nombre LIKE ?
+        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+          BETWEEN ? AND ?
+  AND B.nombre LIKE ?
           AND A.ProductCodeInMap LIKE ?
           AND A.PaymentMethodId = 1
       `;
@@ -146,9 +117,9 @@ exports.getTotal = async (req, res) => {
         SELECT SUM(A.SeValue) AS TotalGastadoEfectivo
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ?
-          AND B.nombre LIKE ?
+        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+          BETWEEN ? AND ?
+  AND B.nombre LIKE ?
           AND A.ProductCodeInMap LIKE ?
           AND A.PaymentMethodId = 3
       `;
@@ -157,9 +128,9 @@ exports.getTotal = async (req, res) => {
         SELECT COUNT(*) AS TotalPiezasVendidas
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ?
-          AND B.nombre LIKE ?
+        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+        BETWEEN ? AND ?
+AND B.nombre LIKE ?
           AND A.ProductCodeInMap LIKE ?
       `;
   
@@ -167,9 +138,9 @@ exports.getTotal = async (req, res) => {
         SELECT COUNT(*) AS TotalTarjetaCredito
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ?
-          AND B.nombre LIKE ?
+        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+        BETWEEN ? AND ?
+AND B.nombre LIKE ?
           AND A.ProductCodeInMap LIKE ?
           AND PaymentMethodId = 1
       `;
@@ -178,9 +149,9 @@ exports.getTotal = async (req, res) => {
         SELECT COUNT(*) AS TotalEfectivo
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ?
-          AND B.nombre LIKE ?
+        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+        BETWEEN ? AND ?
+AND B.nombre LIKE ?
           AND A.ProductCodeInMap LIKE ?
           AND PaymentMethodId = 3
       `;
@@ -189,15 +160,15 @@ exports.getTotal = async (req, res) => {
         SELECT SUM(A.SeValue) AS TotalGastado
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE A.MachineSeTimeDateOnly BETWEEN ? AND ?
-          AND A.MachineSeTimeTimeOnly BETWEEN ? AND ?
-          AND B.nombre LIKE ?
+        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+          BETWEEN ? AND ?
+  AND B.nombre LIKE ?
           AND A.ProductCodeInMap LIKE ?
       `;
   
       conn.query(
         queryTotalGastadoTarjetaCredito,
-        [fechaInicio, fechaFin, horaInicio, horaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+        [fechaInicio, fechaFin,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
         (errTotalGastadoTarjetaCredito, rowsTotalGastadoTarjetaCredito) => {
           if (errTotalGastadoTarjetaCredito) {
             console.error('Error executing query Total Gastado Tarjeta Crédito:', errTotalGastadoTarjetaCredito);
@@ -206,7 +177,7 @@ exports.getTotal = async (req, res) => {
   
           conn.query(
             queryTotalGastadoEfectivo,
-            [fechaInicio, fechaFin, horaInicio, horaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+            [fechaInicio, fechaFin,`%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
             (errTotalGastadoEfectivo, rowsTotalGastadoEfectivo) => {
               if (errTotalGastadoEfectivo) {
                 console.error('Error executing query Total Gastado Efectivo:', errTotalGastadoEfectivo);
@@ -215,7 +186,7 @@ exports.getTotal = async (req, res) => {
   
               conn.query(
                 queryTotalPiezasVendidas,
-                [fechaInicio, fechaFin, horaInicio, horaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                [fechaInicio, fechaFin,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
                 (errTotalPiezasVendidas, rowsTotalPiezasVendidas) => {
                   if (errTotalPiezasVendidas) {
                     console.error('Error executing query Total Piezas Vendidas:', errTotalPiezasVendidas);
@@ -224,7 +195,7 @@ exports.getTotal = async (req, res) => {
   
                   conn.query(
                     queryTarjetaCredito,
-                    [fechaInicio, fechaFin, horaInicio, horaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                    [fechaInicio, fechaFin,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
                     (errTarjetaCredito, rowsTarjetaCredito) => {
                       if (errTarjetaCredito) {
                         console.error('Error executing query Tarjeta Crédito:', errTarjetaCredito);
@@ -233,7 +204,7 @@ exports.getTotal = async (req, res) => {
   
                       conn.query(
                         queryEfectivo,
-                        [fechaInicio, fechaFin, horaInicio, horaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                        [fechaInicio, fechaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
                         (errEfectivo, rowsEfectivo) => {
                           if (errEfectivo) {
                             console.error('Error executing query Efectivo:', errEfectivo);
@@ -242,7 +213,7 @@ exports.getTotal = async (req, res) => {
   
                           conn.query(
                             queryTotalGastado,
-                            [fechaInicio, fechaFin, horaInicio, horaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                            [fechaInicio, fechaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
                             (errTotalGastado, rowsTotalGastado) => {
                               if (errTotalGastado) {
                                 console.error('Error executing query Total Gastado:', errTotalGastado);
