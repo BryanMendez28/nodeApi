@@ -65,7 +65,7 @@ exports.getTablaTotal = async (req, res) => {
 
 FROM (
   SELECT 
-      A.ProductCodeInMap, 
+  A.ProductCodeInMap + 10 AS Carril , 
       CAST(SeValue AS UNSIGNED) AS SeValue,
       COUNT(*) AS TotalRegistros
   FROM nayax_transacciones A 
@@ -109,7 +109,7 @@ exports.getTotal = async (req, res) => {
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
           BETWEEN ? AND ?
   AND B.nombre LIKE ?
-          AND A.ProductCodeInMap LIKE ?
+  AND (A.ProductCodeInMap + 10) LIKE ?
           AND A.PaymentMethodId = 1
       `;
   
@@ -120,7 +120,7 @@ exports.getTotal = async (req, res) => {
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
           BETWEEN ? AND ?
   AND B.nombre LIKE ?
-          AND A.ProductCodeInMap LIKE ?
+  AND (A.ProductCodeInMap + 10) LIKE ?
           AND A.PaymentMethodId = 3
       `;
   
@@ -131,7 +131,7 @@ exports.getTotal = async (req, res) => {
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
 AND B.nombre LIKE ?
-          AND A.ProductCodeInMap LIKE ?
+AND (A.ProductCodeInMap + 10) LIKE ?;
       `;
   
       const queryTarjetaCredito = `
@@ -141,7 +141,7 @@ AND B.nombre LIKE ?
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
 AND B.nombre LIKE ?
-          AND A.ProductCodeInMap LIKE ?
+AND (A.ProductCodeInMap + 10) LIKE ?
           AND PaymentMethodId = 1
       `;
   
@@ -152,7 +152,7 @@ AND B.nombre LIKE ?
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
 AND B.nombre LIKE ?
-          AND A.ProductCodeInMap LIKE ?
+AND (A.ProductCodeInMap + 10) LIKE ?
           AND PaymentMethodId = 3
       `;
   
@@ -163,7 +163,7 @@ AND B.nombre LIKE ?
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
           BETWEEN ? AND ?
   AND B.nombre LIKE ?
-          AND A.ProductCodeInMap LIKE ?
+  AND (A.ProductCodeInMap + 10) LIKE ?;
       `;
   
       conn.query(
