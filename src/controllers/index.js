@@ -27,7 +27,7 @@ exports.getTabla = async (req, res) => {
   
       const query = `
       SELECT 
-      A.ProductCodeInMap + 10 , 
+      A.ProductCodeInMap + 10 AS Carril , 
       CAST(SeValue AS UNSIGNED) AS SeValue,
       COUNT(*) AS TotalRegistros
   FROM nayax_transacciones A 
