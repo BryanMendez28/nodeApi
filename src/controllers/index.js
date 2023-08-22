@@ -28,7 +28,7 @@ exports.getTabla = async (req, res) => {
       const query = `
       SELECT 
       A.ProductCodeInMap + 10 AS Carril , 
-      A.SeValue AS SeValue,
+      CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2)) AS SeValue,
       COUNT(*) AS TotalRegistros
   FROM nayax_transacciones A 
   JOIN nayax_temp B ON B.id = A.cliente_id
@@ -104,7 +104,7 @@ exports.getTotal = async (req, res) => {
       }
   
       const queryTotalGastadoTarjetaCredito = `
-      SELECT SUM(A.SeValue) AS TotalGastadoTarjetaCredito
+      SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2))) AS TotalGastadoTarjetaCredito
       FROM nayax_transacciones A
       JOIN nayax_temp B ON B.id = A.cliente_id
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
@@ -115,7 +115,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       `;
   
       const queryTotalGastadoEfectivo = `
-        SELECT SUM(A.SeValue) AS TotalGastadoEfectivo
+        SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2)) ) AS TotalGastadoEfectivo
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
@@ -158,7 +158,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       `;
   
       const queryTotalGastado = `
-        SELECT SUM(A.SeValue) AS TotalGastado
+        SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2))) AS TotalGastado
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
@@ -168,7 +168,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       `;
 
       const queryPrecioUnitario = `
-        SELECT A.SeValue AS PrecioUnitario
+        SELECT CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2)) AS PrecioUnitario
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
