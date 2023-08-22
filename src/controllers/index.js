@@ -42,7 +42,7 @@ exports.getTabla = async (req, res) => {
           BETWEEN ? AND ?
   AND B.nombre LIKE ?
   GROUP BY A.ProductCodeInMap
-  ORDER BY Carril ASC;
+  ORDER BY TotalRegistros DESC;
       `;
   
       conn.query(query, [fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
