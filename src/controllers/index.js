@@ -28,14 +28,21 @@ exports.getTabla = async (req, res) => {
       const query = `
       SELECT 
       A.ProductCodeInMap + 10 AS Carril , 
-      CAST(SeValue AS UNSIGNED) AS SeValue,
+      CASE 
+        WHEN ExtraCharge IS NOT NULL THEN 
+            CAST(SeValue AS DECIMAL(10, 2)) - 
+            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+        ELSE
+            CAST(SeValue AS DECIMAL(10, 2))
+    END AS SeValue,
       COUNT(*) AS TotalRegistros
   FROM nayax_transacciones A 
   JOIN nayax_temp B ON B.id = A.cliente_id
   WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
           BETWEEN ? AND ?
   AND B.nombre LIKE ?
-  GROUP BY A.ProductCodeInMap;
+  GROUP BY A.ProductCodeInMap
+  ORDER BY Carril ASC;
       `;
   
       conn.query(query, [fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
@@ -103,14 +110,20 @@ exports.getTotal = async (req, res) => {
       }
   
       const queryTotalGastadoTarjetaCredito = `
-        SELECT SUM(A.SeValue) AS TotalGastadoTarjetaCredito
-        FROM nayax_transacciones A
-        JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-          BETWEEN ? AND ?
-  AND B.nombre LIKE ?
-  AND (A.ProductCodeInMap + 10) LIKE ?
-          AND A.PaymentMethodId = 1
+      SELECT SUM( CASE 
+        WHEN ExtraCharge IS NOT NULL THEN 
+            CAST(SeValue AS DECIMAL(10, 2)) - 
+            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+        ELSE
+            CAST(SeValue AS DECIMAL(10, 2))
+    END) AS TotalGastadoTarjetaCredito
+      FROM nayax_transacciones A
+      JOIN nayax_temp B ON B.id = A.cliente_id
+      WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+        BETWEEN ? AND ?
+AND B.nombre LIKE ?
+AND (A.ProductCodeInMap + 10) LIKE ?
+        AND A.PaymentMethodId = 1
       `;
   
       const queryTotalGastadoEfectivo = `
@@ -157,13 +170,36 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       `;
   
       const queryTotalGastado = `
-        SELECT SUM(A.SeValue) AS TotalGastado
+        SELECT SUM(CASE 
+          WHEN ExtraCharge IS NOT NULL THEN 
+              CAST(SeValue AS DECIMAL(10, 2)) - 
+              CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+          ELSE
+              CAST(SeValue AS DECIMAL(10, 2))
+      END) AS TotalGastado
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
           BETWEEN ? AND ?
   AND B.nombre LIKE ?
   AND (A.ProductCodeInMap + 10) LIKE ?;
+      `;
+
+      const queryPrecioUnitario = `
+        SELECT CASE 
+        WHEN ExtraCharge IS NOT NULL THEN 
+            CAST(SeValue AS DECIMAL(10, 2)) - 
+            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+        ELSE
+            CAST(SeValue AS DECIMAL(10, 2))
+    END AS PrecioUnitario
+        FROM nayax_transacciones A
+        JOIN nayax_temp B ON B.id = A.cliente_id
+        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+          BETWEEN ? AND ?
+  AND B.nombre LIKE ?
+  AND (A.ProductCodeInMap + 10) LIKE ?
+  LIMIT 1;
       `;
   
       conn.query(
@@ -219,6 +255,15 @@ AND (A.ProductCodeInMap + 10) LIKE ?
                                 console.error('Error executing query Total Gastado:', errTotalGastado);
                                 return res.status(500).json({ error: 'Internal Server Error' });
                               }
+
+                              conn.query(
+                                queryPrecioUnitario,
+                                [fechaInicio, fechaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                                (errPrecioUnitario, rowsPrecioUnitario) => {
+                                  if (errPrecioUnitario) {
+                                    console.error('Error executing query Total Gastado:', errPrecioUnitario);
+                                    return res.status(500).json({ error: 'Internal Server Error' });
+                                  }
   
                               // Procesa los resultados y crea el objeto de respuesta final
                               const totalGastadoTarjetaCredito = rowsTotalGastadoTarjetaCredito[0].TotalGastadoTarjetaCredito;
@@ -227,14 +272,17 @@ AND (A.ProductCodeInMap + 10) LIKE ?
                               const totalTarjetaCredito = rowsTarjetaCredito[0].TotalTarjetaCredito;
                               const totalEfectivo = rowsEfectivo[0].TotalEfectivo;
                               const totalGastado = rowsTotalGastado[0].TotalGastado;
+                              const totalUnitario = rowsPrecioUnitario[0].PrecioUnitario;
   
+
                               const resultadoFinal = {
                                 TotalTarjetaCredito: totalTarjetaCredito,
                                 TotalEfectivo: totalEfectivo,
                                 TotalPiezasVendidas: totalPiezasVendidas,
                                 TotalGastado: totalGastado,
                                 TotalGastadoTarjetaCredito: totalGastadoTarjetaCredito,
-                                TotalGastadoEfectivo: totalGastadoEfectivo
+                                TotalGastadoEfectivo: totalGastadoEfectivo,
+                                PrecioUnitario: totalUnitario
                               };
   
                               res.json(resultadoFinal);
@@ -251,4 +299,4 @@ AND (A.ProductCodeInMap + 10) LIKE ?
         }
       );
     });
-  };
+  },)}
