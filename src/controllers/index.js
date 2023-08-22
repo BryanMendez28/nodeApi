@@ -28,13 +28,7 @@ exports.getTabla = async (req, res) => {
       const query = `
       SELECT 
       A.ProductCodeInMap + 10 AS Carril , 
-      CASE 
-        WHEN ExtraCharge IS NOT NULL THEN 
-            CAST(SeValue AS DECIMAL(10, 2)) - 
-            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
-        ELSE
-            CAST(SeValue AS DECIMAL(10, 2))
-    END AS SeValue,
+      A.SeValue AS SeValue,
       COUNT(*) AS TotalRegistros
   FROM nayax_transacciones A 
   JOIN nayax_temp B ON B.id = A.cliente_id
@@ -110,13 +104,7 @@ exports.getTotal = async (req, res) => {
       }
   
       const queryTotalGastadoTarjetaCredito = `
-      SELECT SUM( CASE 
-        WHEN ExtraCharge IS NOT NULL THEN 
-            CAST(SeValue AS DECIMAL(10, 2)) - 
-            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
-        ELSE
-            CAST(SeValue AS DECIMAL(10, 2))
-    END) AS TotalGastadoTarjetaCredito
+      SELECT SUM(A.SeValue) AS TotalGastadoTarjetaCredito
       FROM nayax_transacciones A
       JOIN nayax_temp B ON B.id = A.cliente_id
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
@@ -170,13 +158,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       `;
   
       const queryTotalGastado = `
-        SELECT SUM(CASE 
-          WHEN ExtraCharge IS NOT NULL THEN 
-              CAST(SeValue AS DECIMAL(10, 2)) - 
-              CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
-          ELSE
-              CAST(SeValue AS DECIMAL(10, 2))
-      END) AS TotalGastado
+        SELECT SUM(A.SeValue) AS TotalGastado
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
@@ -186,13 +168,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       `;
 
       const queryPrecioUnitario = `
-        SELECT CASE 
-        WHEN ExtraCharge IS NOT NULL THEN 
-            CAST(SeValue AS DECIMAL(10, 2)) - 
-            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
-        ELSE
-            CAST(SeValue AS DECIMAL(10, 2))
-    END AS PrecioUnitario
+        SELECT A.SeValue AS PrecioUnitario
         FROM nayax_transacciones A
         JOIN nayax_temp B ON B.id = A.cliente_id
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
