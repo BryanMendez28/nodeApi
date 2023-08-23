@@ -35,12 +35,16 @@ exports.getTabla = async (req, res) => {
         ELSE
             CAST(SeValue AS DECIMAL(10, 2))
     END) AS SeValue,
-      COUNT(*) AS TotalRegistros
+      COUNT(*) AS TotalRegistros,
+      C.Precio,
+      D.descripcion
   FROM nayax_transacciones A 
   JOIN nayax_temp B ON B.id = A.cliente_id
+  Inner Join nayax_maquina C ON C.Posicion = A.ProductCodeInMap + 10 AND C.Cliente_Id = A.cliente_id
+  LEFT JOIN nayax_Ptemp D ON D.id = C.Producto_Id
   WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-          BETWEEN ? AND ?
-  AND B.nombre LIKE ?
+          BETWEEN '2023-08-01 00:00' AND '2023-08-07 04:00'
+  AND B.nombre LIKE 'C307 - Estafeta Com'
   GROUP BY A.ProductCodeInMap
   ORDER BY TotalRegistros DESC;
       `;
