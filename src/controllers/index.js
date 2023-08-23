@@ -45,6 +45,7 @@ exports.getTabla = async (req, res) => {
   WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
           BETWEEN ? AND ?
   AND B.nombre LIKE ?
+  AND C.Activo = 1
   GROUP BY A.ProductCodeInMap
   ORDER BY TotalRegistros DESC;
       `;
