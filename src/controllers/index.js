@@ -38,13 +38,23 @@ exports.getTabla = async (req, res) => {
   COUNT(*) AS TotalRegistros,
   C.Precio,
   D.descripcion,
-      (SELECT SeValue FROM nayax_transacciones WHERE cliente_id = A.cliente_id 
-      AND ProductCodeInMap = A.ProductCodeInMap 
-      AND CONCAT (MachineSeTimeDateOnly, ' ', MachineSeTimeTimeOnly) 
-       BETWEEN ? AND ?
-        
-      ORDER BY TransactionId DESC LIMIT 1
-      ) as valorActual
+  (SELECT 
+    (CASE 
+        WHEN ExtraCharge IS NOT NULL 
+        THEN 
+            CAST(SeValue AS DECIMAL(10, 2)) - 
+            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+        ELSE
+            CAST(SeValue AS DECIMAL(10, 2))
+    END) AS SeValue 
+FROM nayax_transacciones 
+WHERE cliente_id = A.cliente_id 
+    AND ProductCodeInMap = A.ProductCodeInMap 
+    AND CONCAT(MachineSeTimeDateOnly, ' ', MachineSeTimeTimeOnly) 
+    BETWEEN ? AND ?
+ORDER BY TransactionId DESC 
+LIMIT 1) AS valorActual
+
 FROM nayax_transacciones A 
 JOIN nayax_temp B ON B.id = A.cliente_id
 Inner Join nayax_maquina C ON C.Posicion = A.ProductCodeInMap + 10 AND C.Cliente_Id = A.cliente_id
