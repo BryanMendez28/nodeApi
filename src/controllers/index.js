@@ -26,31 +26,39 @@ exports.getTabla = async (req, res) => {
       if (err) return res.send(err);
   
       const query = `
-      SELECT 
-      A.ProductCodeInMap + 10 AS Carril , 
+      SELECT A.ProductCodeInMap + 10 AS Carril , 
       (CASE 
-        WHEN ExtraCharge IS NOT NULL THEN 
-            CAST(SeValue AS DECIMAL(10, 2)) - 
-            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
-        ELSE
-            CAST(SeValue AS DECIMAL(10, 2))
-    END) AS SeValue,
-      COUNT(*) AS TotalRegistros,
-      C.Precio,
-      D.descripcion
-  FROM nayax_transacciones A 
-  JOIN nayax_temp B ON B.id = A.cliente_id
-  Inner Join nayax_maquina C ON C.Posicion = A.ProductCodeInMap + 10 AND C.Cliente_Id = A.cliente_id
-  LEFT JOIN nayax_Ptemp D ON D.id = C.Producto_Id
-  WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-          BETWEEN ? AND ?
-  AND B.nombre LIKE ?
-  AND C.Activo = 1
-  GROUP BY A.ProductCodeInMap
-  ORDER BY TotalRegistros DESC;
+    WHEN ExtraCharge IS NOT NULL 
+    THEN 
+      CAST(SeValue AS DECIMAL(10, 2)) - 
+      CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+    ELSE
+      CAST(SeValue AS DECIMAL(10, 2))
+  END) AS SeValue,
+  COUNT(*) AS TotalRegistros,
+  C.Precio,
+  D.descripcion,
+      (SELECT SeValue FROM nayax_transacciones WHERE cliente_id = A.cliente_id 
+      AND ProductCodeInMap = A.ProductCodeInMap 
+      AND CONCAT (MachineSeTimeDateOnly, ' ', MachineSeTimeTimeOnly) 
+       BETWEEN ? AND ?
+        
+      ORDER BY TransactionId DESC LIMIT 1
+      ) as valorActual
+FROM nayax_transacciones A 
+JOIN nayax_temp B ON B.id = A.cliente_id
+Inner Join nayax_maquina C ON C.Posicion = A.ProductCodeInMap + 10 AND C.Cliente_Id = A.cliente_id
+LEFT JOIN nayax_Ptemp D ON D.id = C.Producto_Id
+WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+        BETWEEN ? AND ?
+AND B.nombre LIKE ?
+AND C.Activo = 1
+
+GROUP BY A.ProductCodeInMap
+ORDER BY TotalRegistros DESC;
       `;
   
-      conn.query(query, [fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
+      conn.query(query, [fechaInicio, fechaFin, fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
