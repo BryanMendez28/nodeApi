@@ -40,7 +40,7 @@ Inner Join nayax_maquina C ON C.Posicion = A.ProductCodeInMap + 10 AND C.Cliente
 LEFT JOIN nayax_Ptemp D ON D.id = C.Producto_Id
 WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-AND B.nombre LIKE ?
+        AND (LOCATE(?, B.nombre) = 1)
 AND C.Activo = 1
 GROUP BY A.ProductCodeInMap;
       `;
