@@ -40,12 +40,12 @@ Inner Join nayax_maquina C ON C.Posicion = A.ProductCodeInMap + 10 AND C.Cliente
 LEFT JOIN nayax_Ptemp D ON D.id = C.Producto_Id
 WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-        AND (LOCATE(?, B.nombre) = 1)
+AND B.nombre LIKE ?
 AND C.Activo = 1
 GROUP BY A.ProductCodeInMap;
       `;
   
-      conn.query(query, [fechaInicio, fechaFin, fechaInicio, fechaFin,  cliente_id], (err, result) => {
+      conn.query(query, [fechaInicio, fechaFin, fechaInicio, fechaFin,  `%${cliente_id}%`], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
