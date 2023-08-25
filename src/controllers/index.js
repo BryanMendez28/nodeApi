@@ -27,6 +27,7 @@ exports.getTabla = async (req, res) => {
   
       const query = `
       SELECT A.ProductCodeInMap + 10 AS Carril , 
+      C.Capacidad,
       (CASE 
     WHEN ExtraCharge IS NOT NULL 
     THEN 
