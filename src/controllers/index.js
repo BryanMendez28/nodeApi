@@ -28,14 +28,6 @@ exports.getTabla = async (req, res) => {
       const query = `
       SELECT A.ProductCodeInMap + 10 AS Carril , 
       C.Capacidad,
-      (CASE 
-    WHEN ExtraCharge IS NOT NULL 
-    THEN 
-      CAST(SeValue AS DECIMAL(10, 2)) - 
-      CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
-    ELSE
-      CAST(SeValue AS DECIMAL(10, 2))
-  END) AS SeValue,
   COUNT(*) AS TotalRegistros,
   C.Precio,
   D.descripcion,
