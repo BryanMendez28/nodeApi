@@ -56,9 +56,7 @@ WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly)
         BETWEEN ? AND ?
 AND B.nombre LIKE ?
 AND C.Activo = 1
-
-GROUP BY A.ProductCodeInMap
-ORDER BY TotalRegistros DESC;
+GROUP BY A.ProductCodeInMap;
       `;
   
       conn.query(query, [fechaInicio, fechaFin, fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
