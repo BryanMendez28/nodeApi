@@ -1,18 +1,3 @@
-exports.get = (req,res)=>{
-    req.getConnection((err,conn)=>{
-        if (err) return res.send(err);
-
-
-        conn.query(`SELECT COUNT(*) AS TotalRegistros
-        FROM nayax_transacciones`, (err,result)=>{
-            if (err) return res.send(err);
-            res.send(result);
-
-        })
-    }
-  
-    )
-}
 
 exports.getTabla = async (req, res) => {
     let {
@@ -68,42 +53,6 @@ GROUP BY A.ProductCodeInMap;
   
 
 
-exports.getTablaTotal = async (req, res) => {
-  let {
-    fechaInicio ,
-    fechaFin ,
-    
-    cliente_id ,
-  } = req.query;
-
-  req.getConnection((err, conn) => {
-    if (err) return res.send(err);
-
-    const query = `
-   
-  SELECT
-  SUM(TotalRegistros) AS SumaTotalRegistros
-
-FROM (
-  SELECT 
-  A.ProductCodeInMap + 10 AS Carril , 
-      CAST(SeValue AS UNSIGNED) AS SeValue,
-      COUNT(*) AS TotalRegistros
-  FROM nayax_transacciones A 
-  JOIN nayax_temp B ON B.id = A.cliente_id
-  WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-          BETWEEN ? AND ?
-  AND B.nombre LIKE ?
-  GROUP BY A.ProductCodeInMap
-) AS Subconsulta;
-    `;
-
-    conn.query(query, [fechaInicio, fechaFin,  `${cliente_id}%`], (err, result) => {
-      if (err) return res.send(err);
-      res.send(result);
-    });
-  });
-};
 
 exports.getTotal = async (req, res) => {
     // Intenta imprimir los parámetros que estás recibiendo para asegurarte de que son correctos
