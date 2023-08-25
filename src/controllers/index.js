@@ -1,4 +1,5 @@
 
+
 exports.getTabla = async (req, res) => {
     let {
       fechaInicio ,
@@ -51,6 +52,7 @@ GROUP BY A.ProductCodeInMap;
     });
   };
   
+
 
 
 
