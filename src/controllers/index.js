@@ -93,7 +93,7 @@ GROUP BY A.ProductCodeInMap;
              LEFT JOIN nayax_maquina D ON D.Posicion = B.ProductCodeInMap + 10 AND D.Cliente_Id = B.cliente_id
              LEFT JOIN nayax_Ptemp E ON E.id = D.Producto_Id
              WHERE D.Activo = 1
-                AND C.nombre = ?
+                AND C.nombre LIKE ?
                 
             )
             AND NOW() -- La fecha y hora actual
@@ -112,14 +112,13 @@ WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly)
              LEFT JOIN nayax_maquina D ON D.Posicion = B.ProductCodeInMap + 10 AND D.Cliente_Id = B.cliente_id
              LEFT JOIN nayax_Ptemp E ON E.id = D.Producto_Id
              WHERE D.Activo = 1
-                AND C.nombre = ?
+                AND C.nombre LIKE ?
             )
             AND NOW() -- La fecha y hora actual
-        AND B.nombre = ?
+        AND B.nombre LIKE ?
         AND C.Activo = 1
 GROUP BY A.ProductCodeInMap;
       `;
-  
       conn.query(query, [ `%${maquina}%`, `%${maquina}%`, `%${maquina}%`], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
@@ -136,7 +135,6 @@ exports.getTotal = async (req, res) => {
     const {
       fechaInicio,
       fechaFin, 
-      
       nombreMaquinaFiltro,
       codeProductFiltro
     } = req.query;
