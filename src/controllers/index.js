@@ -117,10 +117,10 @@ WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly)
             AND NOW() -- La fecha y hora actual
         AND B.nombre LIKE ?
         AND C.Activo = 1
-        
+
 GROUP BY A.ProductCodeInMap;
       `;
-      conn.query(query, [ `%${maquina}%`, `%${maquina}%`, `%${maquina}%`], (err, result) => {
+      conn.query(query, [ maquina, maquina, maquina], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
