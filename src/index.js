@@ -16,6 +16,7 @@ const dbConfig = {
     database: process.env.DB_NAME || "cliente16",
 }
 
+
 app.use(cors()); // Configura las políticas de acceso CORS
 
 app.use(conn(mysql, dbConfig, "single"));
