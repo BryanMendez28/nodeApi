@@ -37,22 +37,19 @@ FROM nayax_transacciones
 WHERE cliente_id = A.cliente_id 
     AND ProductCodeInMap = A.ProductCodeInMap 
     AND CONCAT(MachineSeTimeDateOnly, ' ', MachineSeTimeTimeOnly) 
-    BETWEEN ? AND ?
-ORDER BY TransactionId DESC 
+    BETWEEN ? AND now()
+ORDER BY MachineSeTimeDateOnly DESC  , MachineSeTimeTimeOnly desc 
 LIMIT 1) AS valorActual
-
 FROM nayax_transacciones A 
 LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
 WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
 AND B.punto_venta LIKE ?
 GROUP BY A.ProductCodeInMap;
-
-
       `;
   
       
-      conn.query(query, [fechaInicio, fechaFin, fechaInicio, fechaFin,  `%${cliente_id}%`], (err, result) => {
+      conn.query(query, [fechaInicio,  fechaInicio, fechaFin,  `%${cliente_id}%`], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
@@ -138,13 +135,19 @@ exports.getTotal = async (req, res) => {
     // Intenta imprimir los parámetros que estás recibiendo para asegurarte de que son correctos
     console.log(req.query);
   
-    const {
+    let{
       fechaInicio,
       fechaFin, 
       nombreMaquinaFiltro,
       codeProductFiltro
     } = req.query;
   
+    try {
+      // Realiza la solicitud a la API externa
+      await axios.get(
+        `http://masven.com.mx/admin7_1/desarrollos/almacen/ChoferV2/AuditoriaSurtido/backend.php?cliente=${encodeURIComponent(nombreMaquinaFiltro)}`
+      );
+
     req.getConnection((err, conn) => {
       if (err) {
         console.error('Error connecting to database:', err);
@@ -154,75 +157,83 @@ exports.getTotal = async (req, res) => {
       const queryTotalGastadoTarjetaCredito = `
       SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2))) AS TotalGastadoTarjetaCredito
       FROM nayax_transacciones A
-      JOIN nayax_temp B ON B.id = A.cliente_id
+     LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-AND B.nombre LIKE ?
+AND B.punto_venta LIKE ?
 AND (A.ProductCodeInMap + 10) LIKE ?
-        AND A.PaymentMethodId = 1
+        AND A.PaymentMethodId = 1;
       `;
   
       const queryTotalGastadoEfectivo = `
-        SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2)) ) AS TotalGastadoEfectivo
-        FROM nayax_transacciones A
-        JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-          BETWEEN ? AND ?
-  AND B.nombre LIKE ?
-  AND (A.ProductCodeInMap + 10) LIKE ?
-          AND A.PaymentMethodId = 3
+      SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2)) ) AS TotalGastadoEfectivo
+      FROM nayax_transacciones A
+       LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
+      WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+        BETWEEN ? AND ?
+AND B.punto_venta LIKE ?
+AND (A.ProductCodeInMap + 10) LIKE ?
+        AND A.PaymentMethodId = 3;
       `;
   
       const queryTotalPiezasVendidas = `
-        SELECT COUNT(*) AS TotalPiezasVendidas
-        FROM nayax_transacciones A
-        JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-        BETWEEN ? AND ?
-AND B.nombre LIKE ?
+      SELECT COUNT(*) AS TotalPiezasVendidas
+      FROM nayax_transacciones A
+      LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
+      WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+      BETWEEN ? AND ?
+AND B.punto_venta LIKE ?
 AND (A.ProductCodeInMap + 10) LIKE ?;
       `;
   
       const queryTarjetaCredito = `
-        SELECT COUNT(*) AS TotalTarjetaCredito
-        FROM nayax_transacciones A
-        JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-        BETWEEN ? AND ?
-AND B.nombre LIKE ?
+      SELECT COUNT(*) AS TotalTarjetaCredito
+      FROM nayax_transacciones A
+      LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
+      WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+      BETWEEN ? AND ?
+AND B.punto_venta LIKE ?
 AND (A.ProductCodeInMap + 10) LIKE ?
-          AND PaymentMethodId = 1
+        AND PaymentMethodId = 1;
       `;
   
       const queryEfectivo = `
-        SELECT COUNT(*) AS TotalEfectivo
-        FROM nayax_transacciones A
-        JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-        BETWEEN ? AND ?
-AND B.nombre LIKE ?
+      SELECT COUNT(*) AS TotalEfectivo
+      FROM nayax_transacciones A
+      LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
+      WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+      BETWEEN ? AND ?
+AND B.punto_venta LIKE ?
 AND (A.ProductCodeInMap + 10) LIKE ?
-          AND PaymentMethodId = 3
+        AND PaymentMethodId = 3;
       `;
   
       const queryTotalGastado = `
-        SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2))) AS TotalGastado
-        FROM nayax_transacciones A
-        JOIN nayax_temp B ON B.id = A.cliente_id
-        WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-          BETWEEN ? AND ?
-  AND B.nombre LIKE ?
-  AND (A.ProductCodeInMap + 10) LIKE ?;
+      SELECT SUM(CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2))) AS TotalGastado
+      FROM nayax_transacciones A
+        LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
+      WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
+        BETWEEN ? AND ?
+AND B.punto_venta LIKE ?
+AND (A.ProductCodeInMap + 10) LIKE ?;
       `;
 
       const queryPrecioUnitario = `
-        SELECT CAST(SUBSTRING(CAST(A.SeValue AS CHAR), 1, LENGTH(CAST(A.SeValue AS CHAR)) - 2) AS DECIMAL(10, 2)) AS PrecioUnitario
+      SELECT(CASE 
+        WHEN ExtraCharge IS NOT NULL 
+        THEN 
+            CAST(SeValue AS DECIMAL(10, 2)) - 
+            CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+        ELSE
+            CAST(SeValue AS DECIMAL(10, 2))
+    END) AS PrecioUnitario
         FROM nayax_transacciones A
-        JOIN nayax_temp B ON B.id = A.cliente_id
+         LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
-          BETWEEN ? AND ?
-  AND B.nombre LIKE ?
-  AND (A.ProductCodeInMap + 10) LIKE ?
+          BETWEEN ? AND NOW()
+  AND B.punto_venta LIKE ?
+  AND B.posicion LIKE ?
+  ORDER BY A.MachineSeTimeDateOnly DESC  , A.MachineSeTimeTimeOnly desc
   LIMIT 1;
       `;
   
@@ -282,7 +293,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
 
                               conn.query(
                                 queryPrecioUnitario,
-                                [fechaInicio, fechaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                                [fechaInicio,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
                                 (errPrecioUnitario, rowsPrecioUnitario) => {
                                   if (errPrecioUnitario) {
                                     console.error('Error executing query Total Gastado:', errPrecioUnitario);
@@ -324,4 +335,9 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       );
     });
   },)}
-
+ catch (error) {
+  console.error('Error al consultar la API externa:', error);
+  return res.status(500).json({ error: 'Internal Server Error' });
+}
+;
+}
