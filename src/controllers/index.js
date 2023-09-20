@@ -1,5 +1,9 @@
 const axios = require('axios'); 
 
+
+
+/*Proyecto Nayax Transacciones */
+
 exports.getTabla = async (req, res) => {
     let {
       fechaInicio ,
@@ -60,77 +64,7 @@ GROUP BY A.ProductCodeInMap;
   }
 };
 
-
-
-
-  exports.getReponer = async (req, res) => {
-    let { maquina } = req.query;
   
-    try {
-      // Realiza la solicitud a la API externa
-      await axios.get(
-        `http://masven.com.mx/admin7_1/desarrollos/almacen/ChoferV2/AuditoriaSurtido/backend.php?cliente=${encodeURIComponent(maquina)}`
-      );
-  
-      // Luego, puedes ejecutar tu consulta SQL sin utilizar los datos de la API externa
-      req.getConnection((err, conn) => {
-        if (err) return res.send(err);
-  
-        const query = `
-        SELECT 
-    A.ProductCodeInMap + 10 AS Carril, 
-    B.capacidad,
-    COUNT(*) AS TotalRegistros,
-    B.producto,
-    (
-        CASE 
-            WHEN ExtraCharge IS NOT NULL 
-            THEN 
-                CAST(SeValue AS DECIMAL(10, 2)) - 
-                CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
-            ELSE
-                CAST(SeValue AS DECIMAL(10, 2))
-        END
-    ) AS SeValue 
-FROM nayax_transacciones AS A
-LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
-LEFT JOIN (
-    SELECT 
-        MAX(V.fecha) AS max_fecha,
-        MAX(V.hora) AS max_hora,
-        V.cliente_id
-    FROM nayax_visita AS V
-    LEFT JOIN nayax_transacciones AS VT ON V.cliente_id = VT.cliente_id
-    LEFT JOIN nayax_transacciones_masven AS C ON V.cliente_id = C.cliente_id AND VT.ProductCodeInMap + 10 = C.posicion
-    WHERE C.punto_venta LIKE ?
-    GROUP BY V.cliente_id
-) AS MaxFechaHora ON A.cliente_id = MaxFechaHora.cliente_id
-WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) BETWEEN CONCAT(MaxFechaHora.max_fecha, ' ', MaxFechaHora.max_hora) AND NOW()
-AND B.punto_venta LIKE ?
-GROUP BY A.ProductCodeInMap;
-        `;
-  
-        conn.query(query, [`${maquina}%`, `${maquina}%`, ], (err, result) => {
-          if (err) return res.send(err);
-          res.send(result);
-        });
-      });
-    } catch (error) {
-      console.error('Error al consultar la API externa:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  };
-  
-
-
- 
-        
-
-
-
-
-  
-
 exports.getTotal = async (req, res) => {
     // Intenta imprimir los parámetros que estás recibiendo para asegurarte de que son correctos
     console.log(req.query);
@@ -341,3 +275,64 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
 }
 ;
 }
+
+
+/*Proyecto Trafico Piezas Por Reponer*/
+
+exports.getReponer = async (req, res) => {
+  let { maquina } = req.query;
+
+  try {
+    // Realiza la solicitud a la API externa
+    await axios.get(
+      `http://masven.com.mx/admin7_1/desarrollos/almacen/ChoferV2/AuditoriaSurtido/backend.php?cliente=${encodeURIComponent(maquina)}`
+    );
+
+    // Luego, puedes ejecutar tu consulta SQL sin utilizar los datos de la API externa
+    req.getConnection((err, conn) => {
+      if (err) return res.send(err);
+
+      const query = `
+      SELECT 
+  A.ProductCodeInMap + 10 AS Carril, 
+  B.capacidad,
+  COUNT(*) AS TotalRegistros,
+  B.producto,
+  (
+      CASE 
+          WHEN ExtraCharge IS NOT NULL 
+          THEN 
+              CAST(SeValue AS DECIMAL(10, 2)) - 
+              CAST(CONCAT(SUBSTRING_INDEX(ExtraCharge, '.', 1), '.', LEFT(SUBSTRING_INDEX(ExtraCharge, '.', -1), 2)) AS DECIMAL(10, 2))
+          ELSE
+              CAST(SeValue AS DECIMAL(10, 2))
+      END
+  ) AS SeValue 
+FROM nayax_transacciones AS A
+LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
+LEFT JOIN (
+  SELECT 
+      MAX(V.fecha) AS max_fecha,
+      MAX(V.hora) AS max_hora,
+      V.cliente_id
+  FROM nayax_visita AS V
+  LEFT JOIN nayax_transacciones AS VT ON V.cliente_id = VT.cliente_id
+  LEFT JOIN nayax_transacciones_masven AS C ON V.cliente_id = C.cliente_id AND VT.ProductCodeInMap + 10 = C.posicion
+  WHERE C.punto_venta LIKE ?
+  GROUP BY V.cliente_id
+) AS MaxFechaHora ON A.cliente_id = MaxFechaHora.cliente_id
+WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) BETWEEN CONCAT(MaxFechaHora.max_fecha, ' ', MaxFechaHora.max_hora) AND NOW()
+AND B.punto_venta LIKE ?
+GROUP BY A.ProductCodeInMap;
+      `;
+
+      conn.query(query, [`${maquina}%`, `${maquina}%`, ], (err, result) => {
+        if (err) return res.send(err);
+        res.send(result);
+      });
+    });
+  } catch (error) {
+    console.error('Error al consultar la API externa:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
