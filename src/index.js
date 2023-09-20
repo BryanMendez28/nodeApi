@@ -7,7 +7,7 @@ const route = require("./routes/index")
 
 
 const app = express()
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5002;
 const dbConfig = {
     host: process.env.DB_HOST || "database-1.c2p2huynj5eb.us-east-2.rds.amazonaws.com",
     port: process.env.DB_PORT || "3306",
