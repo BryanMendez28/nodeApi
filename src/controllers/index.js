@@ -94,7 +94,7 @@ exports.getTotal = async (req, res) => {
      LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-AND B.punto_venta LIKE ?
+        AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 AND (A.ProductCodeInMap + 10) LIKE ?
         AND A.PaymentMethodId = 1;
       `;
@@ -105,7 +105,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
        LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-AND B.punto_venta LIKE ?
+        AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 AND (A.ProductCodeInMap + 10) LIKE ?
         AND A.PaymentMethodId = 3;
       `;
@@ -116,7 +116,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
       BETWEEN ? AND ?
-AND B.punto_venta LIKE ?
+      AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 AND (A.ProductCodeInMap + 10) LIKE ?;
       `;
   
@@ -126,7 +126,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
       LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
       BETWEEN ? AND ?
-AND B.punto_venta LIKE ?
+      AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 AND (A.ProductCodeInMap + 10) LIKE ?
         AND PaymentMethodId = 1;
       `;
@@ -137,7 +137,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
       LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
       BETWEEN ? AND ?
-AND B.punto_venta LIKE ?
+      AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 AND (A.ProductCodeInMap + 10) LIKE ?
         AND PaymentMethodId = 3;
       `;
@@ -148,7 +148,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?
         LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
       WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-AND B.punto_venta LIKE ?
+        AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 AND (A.ProductCodeInMap + 10) LIKE ?;
       `;
 
@@ -165,7 +165,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
          LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
         WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
           BETWEEN ? AND NOW()
-  AND B.punto_venta LIKE ?
+          AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
   AND B.posicion LIKE ?
   ORDER BY A.MachineSeTimeDateOnly DESC  , A.MachineSeTimeTimeOnly desc
   LIMIT 1;
@@ -173,7 +173,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
   
       conn.query(
         queryTotalGastadoTarjetaCredito,
-        [fechaInicio, fechaFin,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+        [fechaInicio, fechaFin,  nombreMaquinaFiltro, `%${codeProductFiltro}%`],
         (errTotalGastadoTarjetaCredito, rowsTotalGastadoTarjetaCredito) => {
           if (errTotalGastadoTarjetaCredito) {
             console.error('Error executing query Total Gastado Tarjeta Crédito:', errTotalGastadoTarjetaCredito);
@@ -182,7 +182,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
   
           conn.query(
             queryTotalGastadoEfectivo,
-            [fechaInicio, fechaFin,`%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+            [fechaInicio, fechaFin,nombreMaquinaFiltro, `%${codeProductFiltro}%`],
             (errTotalGastadoEfectivo, rowsTotalGastadoEfectivo) => {
               if (errTotalGastadoEfectivo) {
                 console.error('Error executing query Total Gastado Efectivo:', errTotalGastadoEfectivo);
@@ -191,7 +191,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
   
               conn.query(
                 queryTotalPiezasVendidas,
-                [fechaInicio, fechaFin,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                [fechaInicio, fechaFin,  nombreMaquinaFiltro, `%${codeProductFiltro}%`],
                 (errTotalPiezasVendidas, rowsTotalPiezasVendidas) => {
                   if (errTotalPiezasVendidas) {
                     console.error('Error executing query Total Piezas Vendidas:', errTotalPiezasVendidas);
@@ -200,7 +200,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
   
                   conn.query(
                     queryTarjetaCredito,
-                    [fechaInicio, fechaFin,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                    [fechaInicio, fechaFin,  nombreMaquinaFiltro, `%${codeProductFiltro}%`],
                     (errTarjetaCredito, rowsTarjetaCredito) => {
                       if (errTarjetaCredito) {
                         console.error('Error executing query Tarjeta Crédito:', errTarjetaCredito);
@@ -209,7 +209,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
   
                       conn.query(
                         queryEfectivo,
-                        [fechaInicio, fechaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                        [fechaInicio, fechaFin, nombreMaquinaFiltro, `%${codeProductFiltro}%`],
                         (errEfectivo, rowsEfectivo) => {
                           if (errEfectivo) {
                             console.error('Error executing query Efectivo:', errEfectivo);
@@ -218,7 +218,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
   
                           conn.query(
                             queryTotalGastado,
-                            [fechaInicio, fechaFin, `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                            [fechaInicio, fechaFin, nombreMaquinaFiltro, `%${codeProductFiltro}%`],
                             (errTotalGastado, rowsTotalGastado) => {
                               if (errTotalGastado) {
                                 console.error('Error executing query Total Gastado:', errTotalGastado);
@@ -227,7 +227,7 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
 
                               conn.query(
                                 queryPrecioUnitario,
-                                [fechaInicio,  `%${nombreMaquinaFiltro}%`, `%${codeProductFiltro}%`],
+                                [fechaInicio,  nombreMaquinaFiltro, `%${codeProductFiltro}%`],
                                 (errPrecioUnitario, rowsPrecioUnitario) => {
                                   if (errPrecioUnitario) {
                                     console.error('Error executing query Total Gastado:', errPrecioUnitario);
@@ -318,11 +318,11 @@ LEFT JOIN (
   FROM nayax_visita AS V
   LEFT JOIN nayax_transacciones AS VT ON V.cliente_id = VT.cliente_id
   LEFT JOIN nayax_transacciones_masven AS C ON V.cliente_id = C.cliente_id AND VT.ProductCodeInMap + 10 = C.posicion
-  WHERE C.punto_venta LIKE ?
+  WHERE SUBSTRING_INDEX(C.punto_venta, ' ', 1) = ?
   GROUP BY V.cliente_id
 ) AS MaxFechaHora ON A.cliente_id = MaxFechaHora.cliente_id
 WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) BETWEEN CONCAT(MaxFechaHora.max_fecha, ' ', MaxFechaHora.max_hora) AND NOW()
-AND B.punto_venta LIKE ?
+AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 GROUP BY A.ProductCodeInMap;
       `;
 
