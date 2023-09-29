@@ -48,12 +48,12 @@ FROM nayax_transacciones A
 LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
 WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-        AND B.punto_venta LIKE CONCAT(?, '%')
+        AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 GROUP BY A.ProductCodeInMap;
       `;
   
       
-      conn.query(query, [fechaInicio,  fechaInicio, fechaFin,  `%${cliente_id}%`], (err, result) => {
+      conn.query(query, [fechaInicio,  fechaInicio, fechaFin,  cliente_id], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
