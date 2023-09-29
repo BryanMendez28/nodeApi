@@ -48,7 +48,7 @@ FROM nayax_transacciones A
 LEFT JOIN nayax_transacciones_masven AS B ON A.cliente_id = B.cliente_id AND A.ProductCodeInMap + 10 = B.posicion
 WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly) 
         BETWEEN ? AND ?
-AND B.punto_venta LIKE ?
+        AND B.punto_venta LIKE CONCAT(?, '%')
 GROUP BY A.ProductCodeInMap;
       `;
   
