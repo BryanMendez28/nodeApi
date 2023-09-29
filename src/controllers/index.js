@@ -326,7 +326,7 @@ AND SUBSTRING_INDEX(B.punto_venta, ' ', 1) = ?
 GROUP BY A.ProductCodeInMap;
       `;
 
-      conn.query(query, [`${maquina}%`, `${maquina}%`, ], (err, result) => {
+      conn.query(query, [maquina, maquina, ], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
       });
