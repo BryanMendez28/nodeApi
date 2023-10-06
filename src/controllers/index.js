@@ -15,7 +15,7 @@ exports.getTabla = async (req, res) => {
     try {
       // Realiza la solicitud a la API externa
       await axios.get(
-        `http://masven.com.mx/admin7_1/desarrollos/bryanNayax-Masven/backend.php?cliente=${encodeURIComponent(cliente_id)}`
+        `http://masven.com.mx/admin7_1/desarrollos/Nayax-Masven/backend.php?cliente=${encodeURIComponent(cliente_id)}`
       );
 
     req.getConnection((err, conn) => {
@@ -79,7 +79,7 @@ exports.getTotal = async (req, res) => {
     try {
       // Realiza la solicitud a la API externa
       await axios.get(
-        `http://masven.com.mx/admin7_1/desarrollos/bryanNayax-Masven/backend.php?cliente=${encodeURIComponent(nombreMaquinaFiltro)}`
+        `http://masven.com.mx/admin7_1/desarrollos/Nayax-Masven/backend.php?cliente=${encodeURIComponent(nombreMaquinaFiltro)}`
       );
 
     req.getConnection((err, conn) => {
@@ -285,7 +285,7 @@ exports.getReponer = async (req, res) => {
   try {
     // Realiza la solicitud a la API externa
     await axios.get(
-      `http://masven.com.mx/admin7_1/desarrollos/bryanNayax-Masven/backend.php?cliente=${encodeURIComponent(maquina)}`
+      `http://masven.com.mx/admin7_1/desarrollos/Nayax-Masven/backend.php?cliente=${encodeURIComponent(maquina)}`
     );
 
     // Luego, puedes ejecutar tu consulta SQL sin utilizar los datos de la API externa
