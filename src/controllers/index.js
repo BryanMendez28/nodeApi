@@ -52,7 +52,6 @@ WHERE CONCAT(A.MachineSeTimeDateOnly, ' ', A.MachineSeTimeTimeOnly)
 GROUP BY A.ProductCodeInMap;
       `;
   
-      
       conn.query(query, [fechaInicio,  fechaInicio, fechaFin,  cliente_id], (err, result) => {
         if (err) return res.send(err);
         res.send(result);
@@ -64,7 +63,6 @@ GROUP BY A.ProductCodeInMap;
   }
 };
 
-  
 exports.getTotal = async (req, res) => {
     // Intenta imprimir los parámetros que estás recibiendo para asegurarte de que son correctos
     console.log(req.query);
