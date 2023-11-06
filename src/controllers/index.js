@@ -169,6 +169,8 @@ AND (A.ProductCodeInMap + 10) LIKE ?;
   LIMIT 1;
       `;
   
+
+      
       conn.query(
         queryTotalGastadoTarjetaCredito,
         [fechaInicio, fechaFin,  nombreMaquinaFiltro, `%${codeProductFiltro}%`],
