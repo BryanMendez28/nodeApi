@@ -5,9 +5,6 @@ const conn = require("express-myconnection");
 const cors = require("cors");
 const route = require("./routes/index")
 
-
-
-
 const app = express()
 const PORT = process.env.PORT || 5002;
 const dbConfig = {
@@ -18,9 +15,9 @@ const dbConfig = {
     database: process.env.DB_NAME || "cliente16",
 }
 
-
-
 app.use(cors()); // Configura las políticas de acceso CORS
+
+
 
 app.use(conn(mysql, dbConfig, "single"));
 app.use(express.json())
